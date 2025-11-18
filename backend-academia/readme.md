@@ -61,7 +61,8 @@ Banco: **`saep_db`**
 
 ```sql
 CREATE TABLE usuarios (
-    email VARCHAR(255) PRIMARY KEY,
+    id SERIAL PRIMARY KEY,              
+    email VARCHAR(255) UNIQUE NOT NULL, 
     nome VARCHAR(255) NOT NULL,
     senha VARCHAR(255) NOT NULL
 );
@@ -69,20 +70,21 @@ CREATE TABLE usuarios (
 CREATE TABLE equipamentos (
     id_material SERIAL PRIMARY KEY,
     nome VARCHAR(100) NOT NULL UNIQUE,
-    quantidade INTEGER NOT NULL CHECK (quantidade >= 0)
-    estoque_minimo INTEGER NOT NULL DEFAULT 0;
+    quantidade INTEGER NOT NULL CHECK (quantidade >= 0),
+    estoque_minimo INTEGER NOT NULL DEFAULT 0);
+
 CREATE TABLE registro (
     id_registro SERIAL PRIMARY KEY, 
     
-    email_usuario_fk VARCHAR(255) NOT NULL,
+    usuario_id_fk INTEGER NOT NULL,
     id_material_fk INTEGER NOT NULL,
     
     tipo_movimentacao TEXT NOT NULL,
     data TIMESTAMP NOT NULL, 
     quantidade INTEGER NOT NULL,
 
-    -- Definição das Chaves Estrangeiras (FKs)
-    FOREIGN KEY (email_usuario_fk) REFERENCES usuarios(email),
+ 
+    FOREIGN KEY (usuario_id_fk)  REFERENCES usuarios(id),
     FOREIGN KEY (id_material_fk) REFERENCES equipamentos(id_material)
 );
 ```
@@ -93,57 +95,54 @@ CREATE TABLE registro (
 
 ```sql
 
+-- Tabela de usuários
 INSERT INTO usuarios (nome, email, senha) VALUES
   ('Ana Souza',  'ana@example.com',   '123'),
   ('Bruno Lima', 'bruno@example.com', '123'),
-  ('Carla Dias', 'carla@example.com', '123')
-ON CONFLICT (email) DO NOTHING;
+  ('Carla Dias', 'carla@example.com', '123');
 
-
+-- Tabela de produtos
 INSERT INTO produtos (nome, quantidade, estoque_minimo) VALUES
   ('bola', 40, 10),
   ('peso 30kg', 60, 15),
-  ('corda', 25, 10)
-ON CONFLICT DO NOTHING;
+  ('corda', 25, 10);
 
 -- Movimentações (histórico inicial)
--- Entradas iniciais (Ana)
-INSERT INTO movimentacoes (produto_id, usuario_id, tipo, quantidade, data_movimentacao,) VALUES
-  ((SELECT id FROM produtos WHERE nome='meia meia meia arrastão'),
+-- Entradas iniciais feitas por Ana
+INSERT INTO movimentacoes (produto_id, usuario_id, tipo, quantidade, data_movimentacao) VALUES
+  ((SELECT id FROM produtos WHERE nome='bola'),
    (SELECT id FROM usuarios WHERE email='ana@example.com'),
-   'entrada', 30, NOW() - INTERVAL '2 days' ),
-  ((SELECT id FROM produtos WHERE nome='499,5 (meia meia meia 3/4)'),
+   'entrada', 20, NOW() - INTERVAL '2 days'),
+  ((SELECT id FROM produtos WHERE nome='peso 30kg'),
    (SELECT id FROM usuarios WHERE email='ana@example.com'),
-   'entrada', 50, NOW() - INTERVAL '2 days'),
-  ((SELECT id FROM produtos WHERE nome='000 (meia meia meia de cano invisível)'),
+   'entrada', 10, NOW() - INTERVAL '2 days'),
+  ((SELECT id FROM produtos WHERE nome='corda'),
    (SELECT id FROM usuarios WHERE email='ana@example.com'),
-   'entrada', 20, NOW() - INTERVAL '2 days');
+   'entrada', 15, NOW() - INTERVAL '2 days');
 
--- Saídas (Bruno)
-INSERT INTO movimentacoes (produto_id, usuario_id, tipo, quantidade, data_movimentacao, observacao) VALUES
-  ((SELECT id FROM produtos WHERE nome='meia meia meia arrastão'),
+-- Saídas feitas por Bruno
+INSERT INTO movimentacoes (produto_id, usuario_id, tipo, quantidade, data_movimentacao) VALUES
+  ((SELECT id FROM produtos WHERE nome='bola'),
    (SELECT id FROM usuarios WHERE email='bruno@example.com'),
-   'saida', 6, NOW() - INTERVAL '1 day'),
-  ((SELECT id FROM produtos WHERE nome='499,5 (meia meia meia 3/4)'),
+   'saida', 5, NOW() - INTERVAL '1 day'),
+  ((SELECT id FROM produtos WHERE nome='peso 30kg'),
    (SELECT id FROM usuarios WHERE email='bruno@example.com'),
-   'saida', 15, NOW() - INTERVAL '1 day'),
-  ((SELECT id FROM produtos WHERE nome='000 (meia meia meia de cano invisível)'),
+   'saida', 10, NOW() - INTERVAL '1 day'),
+  ((SELECT id FROM produtos WHERE nome='corda'),
    (SELECT id FROM usuarios WHERE email='bruno@example.com'),
-   'saida', 4, NOW() - INTERVAL '1 day');
+   'saida', 3, NOW() - INTERVAL '1 day');
 
--- Reposição (Carla)
-INSERT INTO movimentacoes (produto_id, usuario_id, tipo, quantidade,) VALUES
-  ((SELECT id FROM produtos WHERE nome=''),
+-- Reposição feita por Carla
+INSERT INTO movimentacoes (produto_id, usuario_id, tipo, quantidade, data_movimentacao) VALUES
+  ((SELECT id FROM produtos WHERE nome='bola'),
    (SELECT id FROM usuarios WHERE email='carla@example.com'),
-   'entrada', 10,),
-  ((SELECT id FROM produtos WHERE nome='499,5 (meia meia meia 3/4)'),
+   'entrada', 10, NOW()),
+  ((SELECT id FROM produtos WHERE nome='peso 30kg'),
    (SELECT id FROM usuarios WHERE email='carla@example.com'),
-   'entrada', 20,),
-  ((SELECT id FROM produtos WHERE nome='000 (meia meia meia de cano invisível)'),
+   'entrada', 20, NOW()),
+  ((SELECT id FROM produtos WHERE nome='corda'),
    (SELECT id FROM usuarios WHERE email='carla@example.com'),
-   'entrada', 8,);
-```
-
+   'entrada', 8, NOW());
 ---
 
 ## 🧪 Teste rápido
